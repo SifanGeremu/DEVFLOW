@@ -20,3 +20,9 @@ const updateUserProfile = async (req,res)=>{
         console.log(err)
     }
 }
+
+const updateQuery = "UPDATE users SET name = ? WHERE id = ?";
+    const [result] = await pool.execute(updateQuery, [name, userId]);
+        if(result.affectedRows === 0){
+            return res.status(404).json({message:"User not found"});
+        }   
