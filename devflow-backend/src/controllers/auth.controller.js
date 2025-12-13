@@ -63,3 +63,8 @@ export const googleCallback = async (req, res) => {
     res.status(500).json({ error: "Internal server error" });
   }
 };
+const generateToken = (userId, payload) => {
+  return jwt.sign({ userId, ...payload }, process.env.JWT_ACCESS_SECRET, {
+    expiresIn: "1h",
+  });
+};
