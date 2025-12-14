@@ -22,7 +22,7 @@ export const googleCallback = async (req, res) => {
     const picture = profile.photos?.[0]?.value || null;
 
     // 2. Check if user exists in DB
-    const [rows] = await db.query("SELECT * FROM User WHERE google_id = ?", [
+    const [rows] = await db.query("SELECT * FROM user WHERE google_id = ?", [
       googleId,
     ]);
 
@@ -33,7 +33,7 @@ export const googleCallback = async (req, res) => {
     } else {
       // New user → insert
       const [result] = await db.query(
-        "INSERT INTO User (google_id, name, email, profile_picture) VALUES (?, ?, ?, ?)",
+        "INSERT INTO user (google_id, name, email, profile_picture) VALUES (?, ?, ?, ?)",
         [googleId, name, email, picture]
       );
       // Retrieve the inserted user
