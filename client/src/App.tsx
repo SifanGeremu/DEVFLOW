@@ -8,7 +8,7 @@ import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import Profile from "./pages/Profile";
 import NotFound from "./pages/NotFound";
-
+import AuthCallback from "./pages/AuthCallback";
 const queryClient = new QueryClient();
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -50,6 +50,8 @@ function PublicRoute({ children }: { children: React.ReactNode }) {
 function AppRoutes() {
   return (
     <Routes>
+      <Route path="/auth/callback" element={<AuthCallback />} />
+
       <Route path="/" element={<Navigate to="/dashboard" replace />} />
       <Route
         path="/login"

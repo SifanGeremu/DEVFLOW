@@ -1,11 +1,17 @@
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { User, userApi } from '@/services/api';
+import {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  ReactNode,
+} from "react";
+import { userApi } from "@/services/api";
 
 interface AuthContextType {
-  user: User | null;
+  user: any | null;
   token: string | null;
   isLoading: boolean;
-  login: (token: string) => void;
+  login: (serverToken: string) => Promise<void>;
   logout: () => void;
   refreshUser: () => Promise<void>;
 }
@@ -13,8 +19,10 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
-  const [token, setToken] = useState<string | null>(localStorage.getItem('token'));
+  const [user, setUser] = useState<any | null>(null);
+  const [token, setToken] = useState<string | null>(
+    localStorage.getItem("token")
+  );
   const [isLoading, setIsLoading] = useState(true);
 
   const fetchUser = async () => {
@@ -22,48 +30,57 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setIsLoading(false);
       return;
     }
-
     try {
-      const response = await userApi.getProfile();
-      setUser(response.data);
-    } catch (error) {
-      console.error('Failed to fetch user:', error);
-      logout();
+      const res = await userApi.getProfile();
+      setUser(res.data);
+    } catch (err) {
+      console.error("Auth error, logging out:", err);
+      handleLogout();
     } finally {
       setIsLoading(false);
     }
   };
 
+
   useEffect(() => {
     fetchUser();
   }, [token]);
 
-  const login = (newToken: string) => {
-    localStorage.setItem('token', newToken);
-    setToken(newToken);
+  const login = async (serverToken: string) => {
+    localStorage.setItem("token", serverToken); // save server JWT
+    setToken(serverToken);
+    await fetchUser(); // fetch user immediately
   };
 
-  const logout = () => {
-    localStorage.removeItem('token');
+  const handleLogout = () => {
+    localStorage.removeItem("token");
     setToken(null);
     setUser(null);
   };
 
   const refreshUser = async () => {
+    setIsLoading(true);
     await fetchUser();
   };
 
   return (
-    <AuthContext.Provider value={{ user, token, isLoading, login, logout, refreshUser }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        token,
+        isLoading,
+        login,
+        logout: handleLogout,
+        refreshUser,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );
 }
 
 export function useAuth() {
-  const context = useContext(AuthContext);
-  if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
-  return context;
+  const ctx = useContext(AuthContext);
+  if (!ctx) throw new Error("useAuth must be used within AuthProvider");
+  return ctx;
 }

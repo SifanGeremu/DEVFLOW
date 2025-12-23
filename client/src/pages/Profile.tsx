@@ -1,44 +1,76 @@
-import { useState } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
-import { Header } from '@/components/layout/Header';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { userApi, ProfileUpdate } from '@/services/api';
-import { useToast } from '@/hooks/use-toast';
-import { User, Save, Loader2 } from 'lucide-react';
-
-// Mock data for demonstration
-const mockUser = {
-  id: '1',
-  name: 'Alex Developer',
-  email: 'alex@example.com',
-  skillLevel: 'intermediate' as const,
-  goal: 'Full Stack Development',
-  dailyTime: 60,
-  currentStreak: 7,
-  longestStreak: 14,
-};
+import { useState, useEffect } from "react";
+import { useAuth } from "@/contexts/AuthContext";
+import { Header } from "@/components/layout/Header";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { userApi, ProfileUpdate, User as UserType } from "@/services/api";
+import { useToast } from "@/hooks/use-toast";
+import { User, Save, Loader2 } from "lucide-react";
 
 export default function Profile() {
-  const { user: authUser, refreshUser } = useAuth();
+  const { token, refreshUser } = useAuth();
   const { toast } = useToast();
-  const user = authUser || mockUser;
 
+  const [user, setUser] = useState<UserType | null>(null);
   const [formData, setFormData] = useState<{
     name: string;
-    skillLevel: 'beginner' | 'intermediate' | 'advanced';
+    skillLevel: "beginner" | "intermediate" | "advanced";
     goal: string;
     dailyTime: number;
   }>({
-    name: user.name || '',
-    skillLevel: user.skillLevel || 'beginner',
-    goal: user.goal || '',
-    dailyTime: user.dailyTime || 30,
+    name: "",
+    skillLevel: "beginner",
+    goal: "",
+    dailyTime: 30,
   });
   const [isSaving, setIsSaving] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Fetch profile from backend
+  const fetchProfile = async () => {
+    if (!accessToken) return;
+
+    try {
+      setIsLoading(true);
+      const res = await userApi.getProfile();
+      setUser(res.data);
+
+      setFormData({
+        name: res.data.name || "",
+        skillLevel: res.data.skillLevel || "beginner",
+        goal: res.data.goal || "",
+        dailyTime: res.data.dailyTime || 30,
+      });
+    } catch (err) {
+      console.error("Failed to fetch profile:", err);
+      toast({
+        title: "Error",
+        description: "Could not load profile data",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchProfile();
+  }, [accessToken]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -46,22 +78,32 @@ export default function Profile() {
 
     try {
       await userApi.updateProfile(formData as ProfileUpdate);
-      await refreshUser();
+      await fetchProfile(); // refresh after update
+      await refreshUser(); // refresh context
       toast({
-        title: 'Profile updated',
-        description: 'Your changes have been saved successfully.',
+        title: "Profile updated",
+        description: "Your changes have been saved successfully.",
       });
     } catch (error) {
-      console.error('Failed to update profile:', error);
+      console.error("Failed to update profile:", error);
       toast({
-        title: 'Update failed',
-        description: 'There was an error saving your changes. Please try again.',
-        variant: 'destructive',
+        title: "Update failed",
+        description:
+          "There was an error saving your changes. Please try again.",
+        variant: "destructive",
       });
     } finally {
       setIsSaving(false);
     }
   };
+
+  if (isLoading || !user) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen">
@@ -69,7 +111,9 @@ export default function Profile() {
 
       <main className="container max-w-2xl py-8">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold tracking-tight mb-2">Profile Settings</h1>
+          <h1 className="text-3xl font-bold tracking-tight mb-2">
+            Profile Settings
+          </h1>
           <p className="text-muted-foreground">
             Customize your learning preferences and goals
           </p>
@@ -121,9 +165,9 @@ export default function Profile() {
                 <Label htmlFor="skillLevel">Skill Level</Label>
                 <Select
                   value={formData.skillLevel}
-                  onValueChange={(value: 'beginner' | 'intermediate' | 'advanced') =>
-                    setFormData((prev) => ({ ...prev, skillLevel: value }))
-                  }
+                  onValueChange={(
+                    value: "beginner" | "intermediate" | "advanced"
+                  ) => setFormData((prev) => ({ ...prev, skillLevel: value }))}
                 >
                   <SelectTrigger id="skillLevel">
                     <SelectValue placeholder="Select your skill level" />
@@ -165,7 +209,7 @@ export default function Profile() {
                   onChange={(e) =>
                     setFormData((prev) => ({
                       ...prev,
-                      dailyTime: parseInt(e.target.value) || 30,
+                      dailyTime: Number(e.target.value) || 30,
                     }))
                   }
                 />
@@ -194,18 +238,25 @@ export default function Profile() {
         </Card>
 
         {/* Stats Card */}
-        <Card className="mt-6 animate-fade-up" style={{ animationDelay: '100ms' }}>
+        <Card
+          className="mt-6 animate-fade-up"
+          style={{ animationDelay: "100ms" }}
+        >
           <CardHeader>
             <CardTitle className="text-lg">Your Stats</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-2 gap-4">
               <div className="p-4 rounded-lg bg-secondary/50 text-center">
-                <p className="text-3xl font-bold text-gradient">{user.currentStreak}</p>
+                <p className="text-3xl font-bold text-gradient">
+                  {user.currentStreak}
+                </p>
                 <p className="text-sm text-muted-foreground">Current Streak</p>
               </div>
               <div className="p-4 rounded-lg bg-secondary/50 text-center">
-                <p className="text-3xl font-bold text-accent">{user.longestStreak}</p>
+                <p className="text-3xl font-bold text-accent">
+                  {user.longestStreak}
+                </p>
                 <p className="text-sm text-muted-foreground">Longest Streak</p>
               </div>
             </div>

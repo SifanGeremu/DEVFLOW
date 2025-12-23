@@ -77,3 +77,4 @@ export function TodayTaskItem({ task, onComplete }: TodayTaskItemProps) {
     </div>
   );
 }
+export default TodayTaskItem;

@@ -10,19 +10,8 @@ export default function Login() {
   const { login } = useAuth();
   const navigate = useNavigate();
 
-  const handleGoogleLogin = async () => {
-    setIsLoading(true);
-    try {
-      // Simulate OAuth flow for MVP - in production, this would redirect to /auth/google
-      // For demo purposes, we'll simulate a successful login
-      const mockToken = 'demo_jwt_token_' + Date.now();
-      login(mockToken);
-      navigate('/dashboard');
-    } catch (error) {
-      console.error('Login failed:', error);
-    } finally {
-      setIsLoading(false);
-    }
+  const handleGoogleLogin = () => {
+    window.location.href = "http://localhost:3000/auth/google";
   };
 
   return (
