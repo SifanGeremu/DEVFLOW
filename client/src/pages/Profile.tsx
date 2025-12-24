@@ -103,6 +103,14 @@ export default function Profile() {
         <Loader2 className="h-8 w-8 animate-spin" />
       </div>
     );
+  }//expermenting withh 
+  const handleError = (error: unknown) => {
+    console.error("Failed to fetch profile:", error);
+    toast({handlingError
+      title: "Error",
+      description: "Could not load profile data",
+      variant: "destructive",
+    });
   }
 
   return (
