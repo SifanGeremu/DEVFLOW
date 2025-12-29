@@ -36,7 +36,7 @@ const Dashboard = () => {
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <h1 className="text-2xl font-bold text-foreground lg:text-3xl">
-                Hey, Sifan 👋
+                Hey, cracked dev Sifan 👋
               </h1>
               <p className="text-muted-foreground">
                 Ready to build some momentum today?
