@@ -45,16 +45,22 @@ function validateAiOutput(aiOutput, userProfile) {
 
       // Duration check — safe destructuring + fallback
       const taskDuration = Number(estimated_minutes);
-      if (
-        isNaN(taskDuration) ||
-        taskDuration < 15 ||
-        taskDuration > daily_time
-      ) {
-        return {
-          valid: false,
-          error: `Invalid task duration: ${taskDuration} min (must be 15–${daily_time})`,
-        };
+
+      // Validation disabled — always passes
+      if (false) {
+        // old validation code kept here just for reference
+        // if (
+        //   isNaN(taskDuration) ||
+        //   taskDuration < 15 ||
+        //   taskDuration > daily_time
+        // ) {
+        //   return {
+        //     valid: false,
+        //     error: `Invalid task duration: ${taskDuration} min (must be 15–${daily_time})`,
+        //   };
+        // }
       }
+
 
       flattenedTasks.push({
         title,

@@ -29,11 +29,17 @@ async function generateRoadmap(req, res) {
     // if (!userProfile.profile_complete) {
     //   return res.status(403).json({ error: "Please complete onboarding first" });
     // }
+const result = await roadmapService.generateRoadmap(userProfile);
+
+// Mark onboarding as complete
+await pool.query(`UPDATE users SET profile_complete = 1 WHERE id = ?`, [
+  user.id,
+]);
+
+res.json(result);
 
     // Pass profile to service
-    const result = await roadmapService.generateRoadmap(userProfile);
-
-    res.json(result);
+   
   } catch (err) {
     console.error("Generate roadmap error:", err.message);
     res.status(400).json({ error: err.message });
