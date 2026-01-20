@@ -1,172 +1,98 @@
-import { Check, Clock, Play, Lock } from "lucide-react";
+import { useEffect, useState } from "react";
+import { ArrowRight } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import Layout from "@/components/Layout";
 import { Button } from "@/components/ui/button";
-
-interface RoadmapTask {
-  id: number;
-  title: string;
-  description: string;
-  duration: string;
-  status: "completed" | "in-progress" | "pending" | "locked";
-  week: number;
-}
-
-const roadmapTasks: RoadmapTask[] = [
-  { id: 1, title: "Introduction to React", description: "Understand React fundamentals and JSX", duration: "30 min", status: "completed", week: 1 },
-  { id: 2, title: "Components & Props", description: "Learn how to build reusable components", duration: "45 min", status: "completed", week: 1 },
-  { id: 3, title: "State Management Basics", description: "useState and lifting state up", duration: "40 min", status: "completed", week: 1 },
-  { id: 4, title: "React Hooks Deep Dive", description: "Master useEffect, useCallback, useMemo", duration: "45 min", status: "in-progress", week: 2 },
-  { id: 5, title: "Custom Hooks", description: "Build your own reusable hooks", duration: "30 min", status: "pending", week: 2 },
-  { id: 6, title: "TypeScript Generics", description: "Type-safe components and functions", duration: "25 min", status: "pending", week: 2 },
-  { id: 7, title: "Context API", description: "Global state without prop drilling", duration: "35 min", status: "pending", week: 3 },
-  { id: 8, title: "React Query Basics", description: "Server state management made easy", duration: "50 min", status: "locked", week: 3 },
-  { id: 9, title: "Forms & Validation", description: "React Hook Form and Zod", duration: "45 min", status: "locked", week: 3 },
-  { id: 10, title: "Testing Components", description: "Unit testing with Jest and RTL", duration: "60 min", status: "locked", week: 4 },
-  { id: 11, title: "Performance Optimization", description: "Memoization and lazy loading", duration: "40 min", status: "locked", week: 4 },
-  { id: 12, title: "Build Your Project", description: "Apply everything in a real project", duration: "3 hours", status: "locked", week: 4 },
-];
-
-const weeks = [...new Set(roadmapTasks.map((t) => t.week))];
-
-const getStatusIcon = (status: RoadmapTask["status"]) => {
-  switch (status) {
-    case "completed":
-      return <Check size={16} />;
-    case "in-progress":
-      return <Play size={14} />;
-    case "pending":
-      return <Clock size={14} />;
-    case "locked":
-      return <Lock size={14} />;
-  }
-};
-
-const getStatusStyles = (status: RoadmapTask["status"]) => {
-  switch (status) {
-    case "completed":
-      return {
-        card: "border-accent/30 bg-card opacity-70",
-        icon: "bg-accent/20 text-accent",
-        title: "text-muted-foreground line-through",
-      };
-    case "in-progress":
-      return {
-        card: "border-accent/50 bg-accent/5 glow-accent",
-        icon: "bg-accent text-accent-foreground",
-        title: "text-foreground",
-      };
-    case "pending":
-      return {
-        card: "border-border bg-card hover:bg-card-hover",
-        icon: "bg-muted text-muted-foreground",
-        title: "text-foreground",
-      };
-    case "locked":
-      return {
-        card: "border-border/50 bg-card/50 opacity-50",
-        icon: "bg-muted text-muted-foreground",
-        title: "text-muted-foreground",
-      };
-  }
-};
+import { useAuth } from "./authContext";
+import api from "@/lib/api";
+import TaskCard from "@/components/TaskCard";
 
 const Roadmap = () => {
-  const completedCount = roadmapTasks.filter((t) => t.status === "completed").length;
-  const totalCount = roadmapTasks.length;
-  const progressPercent = Math.round((completedCount / totalCount) * 100);
+  const { onboarding, user } = useAuth();
+  const [roadmap, setRoadmap] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const loadRoadmap = async () => {
+      try {
+        // Check if user already has roadmap
+        const res = await api.get("api/tasks", {
+          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+        });
+        setRoadmap(res.data.tasks || []);
+      } catch (err: any) {
+        console.error(err);
+        setError("Failed to load roadmap");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadRoadmap();
+  }, []);
+
+  const handleStartTask = async (taskId: string) => {
+    try {
+      await api.post(`/tasks/${taskId}/start`);
+      setRoadmap((prev) =>
+        prev.map((t) =>
+          t.id === taskId ? { ...t, status: "in-progress" } : t,
+        ),
+      );
+    } catch (err) {
+      console.error("Failed to start task", err);
+    }
+  };
+
+  if (loading)
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        Loading roadmap…
+      </div>
+    );
+
+  if (error)
+    return (
+      <div className="min-h-screen flex items-center justify-center text-red-500">
+        {error}
+      </div>
+    );
+
+  if (!roadmap.length) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center gap-4">
+        <p>No roadmap found. Complete onboarding to generate one.</p>
+        <Button onClick={() => navigate("/onboarding")}>
+          Go to Onboarding
+        </Button>
+      </div>
+    );
+  }
 
   return (
     <Layout>
-      <div className="p-6 lg:p-8 max-w-4xl mx-auto">
-        {/* Header */}
-        <header className="mb-8 animate-fade-in">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-            <div>
-              <h1 className="text-2xl font-bold text-foreground lg:text-3xl">Your Roadmap</h1>
-              <p className="text-muted-foreground">React Mastery • 8 week program</p>
-            </div>
-            <div className="flex items-center gap-3">
-              <div className="text-right">
-                <p className="text-2xl font-bold text-foreground">{progressPercent}%</p>
-                <p className="text-xs text-muted-foreground">{completedCount} of {totalCount} tasks</p>
-              </div>
-              <div className="w-24">
-                <div className="progress-bar">
-                  <div className="progress-fill" style={{ width: `${progressPercent}%` }} />
-                </div>
-              </div>
-            </div>
-          </div>
+      <div className="p-6 max-w-6xl mx-auto space-y-6">
+        <header className="flex items-center justify-between mb-6">
+          <h1 className="text-2xl font-bold text-white">
+            {user?.name?.split(" ")[0] || "Developer"}'s Roadmap
+          </h1>
+          <Button variant="ghost" onClick={() => navigate("/dashboard")}>
+            Back to Dashboard <ArrowRight size={16} />
+          </Button>
         </header>
 
-        {/* Timeline */}
-        <div className="relative space-y-12">
-          {/* Vertical line */}
-          <div className="absolute left-4 top-0 bottom-0 w-px bg-border lg:left-6" />
-
-          {weeks.map((week, weekIndex) => {
-            const weekTasks = roadmapTasks.filter((t) => t.week === week);
-
-            return (
-              <section
-                key={week}
-                className="relative animate-fade-in"
-                style={{ animationDelay: `${weekIndex * 0.1}s` }}
-              >
-                {/* Week marker */}
-                <div className="flex items-center gap-4 mb-6">
-                  <div className="flex h-8 w-8 lg:h-12 lg:w-12 items-center justify-center rounded-full bg-muted border border-border z-10">
-                    <span className="text-sm font-semibold text-foreground lg:text-base">{week}</span>
-                  </div>
-                  <div>
-                    <h2 className="text-lg font-semibold text-foreground">Week {week}</h2>
-                    <p className="text-sm text-muted-foreground">
-                      {weekTasks.filter((t) => t.status === "completed").length} of {weekTasks.length} completed
-                    </p>
-                  </div>
-                </div>
-
-                {/* Tasks */}
-                <div className="ml-12 lg:ml-16 space-y-3">
-                  {weekTasks.map((task) => {
-                    const styles = getStatusStyles(task.status);
-                    return (
-                      <div
-                        key={task.id}
-                        className={`flex items-center justify-between rounded-xl border p-4 transition-all duration-200 ${styles.card}`}
-                      >
-                        <div className="flex items-center gap-4">
-                          <div
-                            className={`flex h-8 w-8 items-center justify-center rounded-full ${styles.icon}`}
-                          >
-                            {getStatusIcon(task.status)}
-                          </div>
-                          <div>
-                            <h3 className={`font-medium ${styles.title}`}>{task.title}</h3>
-                            <p className="text-sm text-muted-foreground">{task.description}</p>
-                            <div className="flex items-center gap-1.5 mt-1 text-xs text-muted-foreground">
-                              <Clock size={12} />
-                              <span>{task.duration}</span>
-                            </div>
-                          </div>
-                        </div>
-                        {task.status === "in-progress" && (
-                          <Button variant="accent" size="sm">
-                            Continue
-                          </Button>
-                        )}
-                        {task.status === "pending" && (
-                          <Button variant="default" size="sm">
-                            Start
-                          </Button>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              </section>
-            );
-          })}
+        <div className="grid gap-6">
+          {roadmap.map((task) => (
+            <TaskCard
+              key={task.id}
+              title={task.title}
+              duration={`${task.estimated_minutes} min`}
+              status={task.status}
+              onStart={() => handleStartTask(task.id)}
+            />
+          ))}
         </div>
       </div>
     </Layout>

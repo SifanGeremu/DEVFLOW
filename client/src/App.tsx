@@ -1,34 +1,74 @@
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+// src/App.tsx
+import {
+  BrowserRouter as Router,
+  Route,
+  Routes,
+  Navigate,
+} from "react-router-dom";
+import { AuthProvider, useAuth } from "./pages/authContext";
 import Landing from "./pages/Landing";
-import Onboarding from "./pages/Onboarding";
 import Dashboard from "./pages/Dashboard";
+import Onboarding from "./pages/Onboarding";
 import Roadmap from "./pages/Roadmap";
-import Profile from "./pages/Profile";
-import NotFound from "./pages/NotFound";
+import AuthCallback from "./pages/authCallback"; 
 
-const queryClient = new QueryClient();
+// ProtectedRoute must be inside AuthProvider
+const ProtectedRoute = ({ children }: { children: JSX.Element }) => {
+  const { user, onboarding, loading } = useAuth();
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
+  if (loading)
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        Loading...
+      </div>
+    );
+
+  if (!user) return <Navigate to="/" />; // redirect to landing if not logged in
+
+  if (!onboarding || Object.keys(onboarding).length === 0)
+    return <Navigate to="/onboarding" />; // redirect if onboarding incomplete
+
+  return children;
+};
+
+function App() {
+  return (
+    <AuthProvider>
+      <Router>
         <Routes>
+          {/* Landing */}
           <Route path="/" element={<Landing />} />
+
+          {/* OAuth callback handler */}
+          <Route path="/auth/callback" element={<AuthCallback />} />
+
+          {/* Onboarding */}
           <Route path="/onboarding" element={<Onboarding />} />
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/roadmap" element={<Roadmap />} />
-          <Route path="/profile" element={<Profile />} />
-          <Route path="*" element={<NotFound />} />
+
+          {/* Protected pages */}
+          <Route
+            path="/dashboard"
+            element={
+              <ProtectedRoute>
+                <Dashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/roadmap"
+            element={
+              <ProtectedRoute>
+                <Roadmap />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Catch-all → landing */}
+          <Route path="*" element={<Navigate to="/" />} />
         </Routes>
-      </BrowserRouter>
-    </TooltipProvider>
-  </QueryClientProvider>
-);
+      </Router>
+    </AuthProvider>
+  );
+}
 
 export default App;

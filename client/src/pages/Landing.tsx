@@ -1,22 +1,32 @@
 import { Link } from "react-router-dom";
-import { Zap, ArrowRight, CheckCircle2, Sparkles, Target, TrendingUp } from "lucide-react";
+import {
+  Zap,
+  ArrowRight,
+  CheckCircle2,
+  Sparkles,
+  Target,
+  TrendingUp,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 const features = [
   {
     icon: Sparkles,
     title: "AI-Powered Roadmaps",
-    description: "Get personalized learning paths tailored to your goals and skill level.",
+    description:
+      "Get personalized learning paths tailored to your goals and skill level.",
   },
   {
     icon: Target,
     title: "Daily Focus",
-    description: "Stay on track with curated tasks that respect your available time.",
+    description:
+      "Stay on track with curated tasks that respect your available time.",
   },
   {
     icon: TrendingUp,
     title: "Real Progress",
-    description: "Track your momentum and celebrate wins with visual progress insights.",
+    description:
+      "Track your momentum and celebrate wins with visual progress insights.",
   },
 ];
 
@@ -140,7 +150,7 @@ const Landing = () => {
             Join thousands of developers who are shipping faster and learning
             smarter.
           </p>
-          <Link to="/onboarding">
+          <Link to="http://localhost:3000/auth/google">
             <Button variant="hero" size="lg">
               Get Started Free
               <ArrowRight size={18} />

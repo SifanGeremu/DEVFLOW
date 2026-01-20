@@ -1,48 +1,34 @@
 // src/pages/AuthCallback.tsx
 import { useEffect } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
+import api from "@/lib/api";
 
-export default function AuthCallback() {
+const AuthCallback = () => {
   const navigate = useNavigate();
-  const location = useLocation();
 
   useEffect(() => {
-    const params = new URLSearchParams(location.search);
+    const params = new URLSearchParams(window.location.search);
     const token = params.get("token");
 
-    if (token) {
-      // Save JWT to localStorage
-      localStorage.setItem("token", token);
-
-      // Optional: quick check if profile exists (call your /user/profile endpoint)
-      fetch("http://localhost:3000/user/profile", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      })
-        .then((res) => res.json())
-        .then((data) => {
-          if (data.user?.profile_complete === 1) {
-            // Already onboarded → go to dashboard
-            navigate("/dashboard");
-          } else {
-            // New or incomplete → onboarding
-            navigate("/onboarding");
-          }
-        })
-        .catch(() => {
-          // Fallback: go to onboarding if check fails
-          navigate("/onboarding");
-        });
-    } else {
-      // No token → error, go back to landing
-      navigate("/");
+    if (!token) {
+      return navigate("/?error=auth_failed");
     }
-  }, [location, navigate]);
+
+    // Save token locally
+    localStorage.setItem("token", token);
+
+    // Set default Authorization header for all API calls
+    api.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+
+    // Redirect to onboarding or dashboard
+    navigate("/onboarding");
+  }, [navigate]);
 
   return (
     <div className="min-h-screen flex items-center justify-center">
-      <p className="text-lg text-muted-foreground">Authenticating...</p>
+      Signing in...
     </div>
   );
-}
+};
+
+export default AuthCallback;
