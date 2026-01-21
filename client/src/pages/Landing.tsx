@@ -152,7 +152,7 @@ const Landing = () => {
           </p>
           <Link to="http://localhost:3000/auth/google">
             <Button variant="hero" size="lg">
-              Get Started Free
+              Get Started For Free
               <ArrowRight size={18} />
             </Button>
           </Link>
