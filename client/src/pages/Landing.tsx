@@ -171,7 +171,7 @@ const Landing = () => {
             </span>
           </div>
           <p className="text-sm text-muted-foreground">
-            © 2024 DevFlow. All rights reserved.
+            © 2025 DevFlow. All rights reserved.
           </p>
         </div>
       </footer>
