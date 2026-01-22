@@ -14,11 +14,11 @@ const PORT = process.env.PORT;
 
 app.use(
   cors({
-    origin: "http://localhost:8080",
+    origin: "https://devflow-puce.vercel.app/",
     credentials: true,
     allowedHeaders: ["Content-Type", "Authorization"],
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
-  })
+  }),
 );
 
 // Middleware to parse JSON bodies
