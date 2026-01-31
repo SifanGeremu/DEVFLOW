@@ -91,3 +91,16 @@ CREATE TABLE ai_recommendations (
   PRIMARY KEY (id),
   FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+--second ai reccomendation table --
+CREATE TABLE ai_recommendations (
+  id CHAR(36) NOT NULL,
+  user_id CHAR(36) NOT NULL,
+  goal_snapshot JSON,
+  recommendation TEXT NOT NULL,
+  reasoning TEXT,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
